@@ -22,5 +22,10 @@ def pin_map(conn, user, data):
     band=get(conn,sculpture_bands,run['input']['band']['code'],lock=True)
     model=run['result']
     need(band['revision']==run['input']['band']['revision'],'观测版本已有更新，重新划分灯组')
+    # 归档新图即把同一投影带的旧现用图置为历史，现用底图一次性切换到新图。
+    conn.execute(shadow_plans.update().where(shadow_plans.c.band==band['code'],
+                                             shadow_plans.c.superseded.is_(False))
+                 .values(superseded=True))
     return insert(conn,shadow_plans,code=data.code,band=band['code'],revision=band['revision'],
-                  clusters=model['clusters'],layout=model['layout'],evidence=model['evidence'],token=data.token)
+                  clusters=model['clusters'],layout=model['layout'],evidence=model['evidence'],
+                  token=data.token,superseded=False)

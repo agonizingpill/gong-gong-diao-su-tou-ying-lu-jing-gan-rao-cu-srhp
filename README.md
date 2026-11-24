@@ -10,6 +10,7 @@
 - 遮挡观测格 `sight_cells`，字段为 `band`（投影带）、`x`（列坐标）、`y`（行坐标）、`shade`（遮挡面积比）、`spill`（串光面积比）、`owner`（当前责任灯组）、`protected`（雕塑保护观察位）。模型约束位于 `backend/domain/sight_cells_model.py`，规则位于 `sight_cells_service.py`。
 - 遮挡图谱 `shadow_plans`，字段为 `band`（投影带）、`revision`（底图版本）、`clusters`（簇数）、`layout`（簇及网格坐标）、`evidence`（谱聚类统计）、`token`（任务凭证）。模型约束位于 `backend/domain/shadow_plans_model.py`，规则位于 `shadow_plans_service.py`。
 - 观察位灯组责任 `light_handoffs`，字段为 `plan`（谱图）、`cell`（观察格）、`cluster`（关联簇）、`source`（交出灯组）、`target`（接收灯组）、`status`（移交状态）、`first_sign`（领班签署人）、`second_sign`（复核签署人）。模型约束位于 `backend/domain/light_handoffs_model.py`，规则位于 `light_handoffs_service.py`。
+- 双队试投对照 `trial_runs` / `trial_cells` / `trial_maps`。两队在同一投影带、同一封存底图版本上各自记满同一网格（`trial_cells` 同格按队各存一行，互不覆盖），分别谱聚类后封存到 `trial_maps`，系统按格坐标标出只在其中一张图同簇的非对称差异格对 `diff_pairs`。读数随对照封存：先记下的补测若落在换版后的底图上，会把旧对照批次置为 `底图失效`；复核员在两队都封存后采纳其中一队的整套读数，归档图与现用底图一次性切换（`shadow_plans.superseded` 标记历史图），采纳重试不重复升版。模型约束位于 `backend/domain/trial_runs_model.py`，规则位于 `trial_runs_service.py`。
 
 ### 一天的业务操作
 
@@ -49,6 +50,7 @@ Compose 运行 Nginx、Python FastAPI、独立 Redis 消费进程、PostgreSQL 1
 | 遮挡观测格 | `/sight_cells` /sight_cells/record-beam，/sight_cells/protect-station | `frontend/src/pages/sight_cells.js` |
 | 遮挡图谱 | `/shadow_plans` /shadow_plans/segment-bank，/shadow_plans/pin-map | `frontend/src/pages/shadow_plans.js` |
 | 观察位灯组责任 | `/light_handoffs` /light_handoffs/offer-station，/light_handoffs/check-station | `frontend/src/pages/light_handoffs.js` |
+| 双队试投对照 | `/trial_runs` /trial_runs/open-trial，/trial_runs/record-trial，/trial_runs/segment-trial，/trial_runs/pin-trial，/trial_runs/adopt-trial | `frontend/src/pages/trial_runs.js` |
 
 SQL 实体与约束在 `backend/domain` 下维护。前端使用原生 ES modules。核心算子为 SpectralClustering。以四邻格构图，按遮挡率和串光率差的平方和设定指数权重。谱分组按格序重新编号，输出边切分数量、权重占比和底图哈希。
 

@@ -6,8 +6,11 @@ export function plotBoard(plans) {
   if (!plans.length) return el('p',{class:'empty'},'试投格录齐后测算。展陈复核员归档图谱后会显示灯影方格。');
   const chosen = el('div',{class:'plot-sheet'});
   const lookup = new Map(plans.map(plan => [plan.code,plan]));
+  const current = plans.filter(plan => !plan.superseded);
+  const ordered = current.length ? current : plans;
   const selector = el('select',{'aria-label':'遮挡图谱',onchange:event => draw(lookup.get(event.target.value))},
-    plans.map(plan => el('option',{value:plan.code},plan.code)));
+    plans.map(plan => el('option',{value:plan.code},
+      plan.code + (plan.superseded ? '（历史）' : '（现用）'))));
   function draw(plan) {
     const note = el('p',{class:'plot-detail','aria-live':'polite'},'选择方格查看试投覆盖。带虚线边框的格子需要二签。');
     const cols = plan.evidence.grid[0];
@@ -26,9 +29,10 @@ export function plotBoard(plans) {
       },String(point.cluster))));
     chosen.replaceChildren(
       el('p',{class:'plot-caption'},plan.band+' · 观测版本 '+plan.revision+' · '+
+        (plan.superseded ? '历史底图' : '现用底图')+' · '+
         plan.evidence.plots+' 格 · '+plan.evidence.cut_edges+'/'+plan.evidence.edges+' 条边跨区'),
       grid,note);
   }
-  draw(plans[0]);
+  draw(ordered[0]);
   return el('section',{class:'plan-picker'},el('label',{},'归档平面',selector),chosen);
 }

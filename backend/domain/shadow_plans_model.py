@@ -11,6 +11,7 @@ shadow_plans = Table('shadow_plans', metadata,
     Column('layout', JSON, nullable=False),
     Column('evidence', JSON, nullable=False),
     Column('token', String(64), nullable=False, unique=True),
+    Column('superseded', Boolean, nullable=False, server_default='false'),
     CheckConstraint('revision>=0'),
     CheckConstraint('clusters between 2 and 4'),
 )
